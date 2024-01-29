@@ -7,7 +7,7 @@ import (
 
 // this represents a users repository
 type users struct {
-	df *sql.DB
+	db *sql.DB
 }
 
 // This func creates a new users repository
@@ -16,7 +16,7 @@ func NewUsersRepository(db *sql.DB) *users {
 }
 
 // This adds user to db
-func (repository users) Creates(user models.User) (uint64, error) {
+func (repository users) Create(user models.User) (uint64, error) {
 	statement, err := repository.db.Prepare("insert into users (name, nick, email, password) values (?, ?, ?, ?)")
 	if err != nil {
 		return 0, err
@@ -28,7 +28,7 @@ func (repository users) Creates(user models.User) (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	lastIDInserted, err := result.lastIDInserted()
+	lastIDInserted, err := result.LastInsertId()
 	if err != nil {
 		return 0, err
 	}

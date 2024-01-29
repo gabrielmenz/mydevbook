@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"goapi/src/database"
 	"goapi/src/models"
 	"goapi/src/repositories"
 	"io"
@@ -37,13 +38,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	db, err := db.Connect()
+	db, err := database.Connect()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	repository := repositories.NewUsersRepository(db)
-	userID, err := repository.Creates(user)
+	userID, err := repository.Create(user)
 	if err != nil {
 		log.Fatal(err)
 	}
