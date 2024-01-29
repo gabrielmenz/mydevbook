@@ -1,0 +1,13 @@
+CREATE DATABASE IF NOT EXISTS mybyte2u;
+USE mybyte2u;
+
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nameuser VARCHAR(100) NOT NULL,
+    nick VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    pw VARCHAR(255) NOT NULL,  -- Longer length for password hash storage
+    createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
+) ENGINE = InnoDB;
