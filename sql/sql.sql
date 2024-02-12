@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS mybyte2u;
-USE mybyte2u;
+CREATE DATABASE IF NOT EXISTS devbook;
+USE devbook;
 
 DROP TABLE IF EXISTS users;
 

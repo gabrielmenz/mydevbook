@@ -16,6 +16,7 @@ type Route struct {
 // sends all routes to the router
 func Configurate(r *mux.Router) *mux.Router {
 	routes := RoutesUsers
+	routes = append(routes, routeLogin)
 
 	for _, route := range routes {
 		r.HandleFunc(route.URI, route.Function).Methods(route.Method)

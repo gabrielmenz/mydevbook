@@ -11,13 +11,13 @@ import (
 
 var (
 	ConnectionStringDB = ""
+	Port               = 0
 
-	// Gate where the API will run
-	Gate = 0
+	// SecretKey is used to sign the token
+	SecretKey []byte
 )
 
-//Load will inicialize the env variables
-
+// Load initializes the environment variables
 func Load() {
 	var err error
 
@@ -25,15 +25,15 @@ func Load() {
 		log.Fatal(err)
 	}
 
-	Gate, err = strconv.Atoi(os.Getenv("API_GATE"))
+	Port, err = strconv.Atoi(os.Getenv("API_PORT"))
 	if err != nil {
-		Gate = 9000
+		Port = 8000
 	}
 
-	ConnectionStringDB = fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=local",
+	ConnectionStringDB = fmt.Sprintf("%s:%s@/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv("DB_USER"),
-		os.Getenv("PASSWORD"),
+		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
 	)
-
+	SecretKey = []byte(os.Getenv("SECRET_KEY"))
 }
