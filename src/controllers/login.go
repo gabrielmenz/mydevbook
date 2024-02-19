@@ -2,19 +2,34 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
 	"goapi/src/authentication"
 	"goapi/src/database"
 	"goapi/src/models"
 	"goapi/src/repositories"
 	"goapi/src/responses"
 	"goapi/src/security"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	bodyRequest, err := ioutil.ReadAll(r.Body)
+	bodyRequest, err := func() ([]byte, error) {
+		var r io.Reader = io.Reader(r.Body)
+		b := make([]byte, 0, 512)
+		for {
+			n, err := r.Read(b[len(b):cap(b)])
+			b = b[:len(b)+n]
+			if err != nil {
+				if err == io.EOF {
+					err = nil
+				}
+				return b, err
+			}
+			if len(b) == cap(b) {
+				b = append(b, 0)[:len(b)]
+			}
+		}
+	}()
 	if err != nil {
 		responses.Error(w, http.StatusUnprocessableEntity, err)
 		return
@@ -43,6 +58,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		responses.Error(w, http.StatusUnauthorized, err)
 		return
 	}
-	token, _ := authentication.CreateToken(userStoredInDB.ID)
-	fmt.Println(token)
+	token, err := authentication.CreateToken(userStoredInDB.ID)
+	if err != nil {
+		responses.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+	w.Write([]byte(token))
 }

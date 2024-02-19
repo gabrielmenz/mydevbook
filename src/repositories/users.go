@@ -40,7 +40,6 @@ func (repository Users) Create(user models.User) (uint64, error) {
 }
 
 // Search returns all users that meet the name or nick filter request
-
 func (repository Users) Search(nameOrNick string) ([]models.User, error) {
 	nameOrNick = fmt.Sprintf("%%%s%%", nameOrNick) // %nameOrNick
 
@@ -76,7 +75,6 @@ func (repository Users) Search(nameOrNick string) ([]models.User, error) {
 	return users, nil
 
 }
-
 func (repository Users) SearchForID(ID uint64) (models.User, error) {
 	lines, err := repository.db.Query(
 		"select id, nameuser, nick, email, createdAt from users where id = ?",
@@ -137,7 +135,6 @@ func (repository Users) Delete(ID uint64) error {
 	}
 	return nil
 }
-
 func (repository Users) SearchForEmail(email string) (models.User, error) {
 	line, err := repository.db.Query("select id, pw from users where email = ?", email)
 	if err != nil {
@@ -153,4 +150,132 @@ func (repository Users) SearchForEmail(email string) (models.User, error) {
 		}
 	}
 	return user, nil
+}
+func (repository Users) Follow(userId, followerID uint64) error {
+	statement, err := repository.db.Prepare(
+		"insert ignore into followers (user_id, follower_id) values (?, ?)",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(userId, followerID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UnFollow allows a user to stop following another
+func (repository Users) UnFollow(userId, followerID uint64) error {
+	statement, err := repository.db.Prepare(
+		"Delete from followers (user_id, follower_id) values (?, ?)",
+	)
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(userId, followerID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SearchFollowers gets all followers a user has
+func (repository Users) SearchFollowers(userID uint64) ([]models.User, error) {
+	lines, err := repository.db.Query(`
+		select u.id, u.nameuser, u.nick, u.email, u.createdAt
+		from users u inner join followers f on u.id = f.follower_id where f.user_id = ?`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer lines.Close()
+
+	var users []models.User
+	for lines.Next() {
+		var user models.User
+
+		if err = lines.Scan(
+			&user.ID,
+			&user.Nameuser,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+// SearchFollowing gets all followers from a user
+func (repository Users) SearchFollowing(userID uint64) ([]models.User, error) {
+	lines, err := repository.db.Query(`
+			select u.id, u.nameuser, u.nick, u.email, u.createdAt
+			from Users u inner join followers f on u.id = f.user_id where f.follower_id = ?`,
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer lines.Close()
+
+	var users []models.User
+	for lines.Next() {
+		var user models.User
+
+		if err = lines.Scan(
+			&user.ID,
+			&user.Nameuser,
+			&user.Nick,
+			&user.Email,
+			&user.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+// SearchPw gets a user pw by the ID
+func (repository Users) SearchPw(userID uint64) (string, error) {
+	line, erro := repository.db.Query("select pw from users where id = ?", userID)
+	if erro != nil {
+		return "", erro
+	}
+	defer line.Close()
+
+	var user models.User
+
+	if line.Next() {
+		if erro = line.Scan(&user.Pw); erro != nil {
+			return "", erro
+		}
+	}
+
+	return user.Pw, nil
+}
+func (repository Users) UpdatePw(userID uint64, pw string) error {
+	statement, err := repository.db.Prepare("update users set pw = ? where id = ?")
+	if err != nil {
+		return err
+	}
+	defer statement.Close()
+
+	if _, err = statement.Exec(pw, userID); err != nil {
+		return err
+	}
+
+	return nil
 }
